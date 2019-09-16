@@ -346,13 +346,9 @@ Color getColorAt(
     return final_color.clip();
 }
 
-// int thisone;z
 vector<Object*> scene_objects;
 
 void makeCube (Vect corner1, Vect corner2, Color color) {
-    // Triangle scene_tri (Vect(3, 0, 0), Vect(0, 3, 0), Vect(0, 0, 3), Color(0,0,0,0));
-    // scene_objects.push_back(dynamic_cast<Object*>(&scene_tri));
-
     // corner 1
     double c1x = corner1.getVectX();
     double c1y = corner1.getVectY();
@@ -397,16 +393,18 @@ int main(int argc, char *argv[]){
     clock_t t1, t2;
     t1 = clock();
 
+    // CUSTOMIZABLE size and DPI
     int dpi = 72;
     int width = 640;
     int height = 480;
     int n = width * height;
     RGBType *pixels = new RGBType[n];
 
-    int aadepth = 4;
+    // CUSTOMIZABLE aa depth and ambientlight
+    int aadepth = 1;
+    double ambientlight = 0.2;
     double aathreshold = 0.1;
     double aspectratio = (double)width / (double)height;
-    double ambientlight = 0.2;
     double accuracy = 0.000001;
 
     Vect O (0, 0, 0);
@@ -415,11 +413,11 @@ int main(int argc, char *argv[]){
     Vect Z (0, 0, 1);
     Vect new_sphere_loc (1.75, 0, 0);
 
-    Vect campos (10, 10, 10);
-    // X is into/outof screen
+    // CUSTOMIZABLE camera
+    // X is into or out of the screen
     // Y is up or down
-    // Z is left or right...
-
+    // Z is left or right
+    Vect campos (10, 10, 10);
     Vect look_at (0, 0, 0);
     Vect diff_btw (
         campos.getVectX() - look_at.getVectX(),
@@ -431,6 +429,9 @@ int main(int argc, char *argv[]){
     Vect camdown = camright.crossProduct(camdir);
     Camera scene_cam (campos, camdir, camright, camdown);
 
+    // CUSTOMIZABLE colors, last value is "special"
+    // If special is in [0, 1], gets shiny
+    // If special is 2, we get a checkerboard pattern
     Color white_light (1.0, 1.0, 1.0, 0);
     Color shiny_white (1.0, 1.0, 1.0, 0.4);
     Color pretty_green (0.5, 1.0, 0.5, 0.3);
@@ -440,13 +441,13 @@ int main(int argc, char *argv[]){
     Color black (0.0, 0.0, 0.0, 0);
     Color orange (0.5, 0.5, 0, 0);
 
-    // light source(s)
+    // CUSTOMIZABLE light source(s)
     Vect light_position (-7, 10, -10);
     Light scene_light (light_position, white_light);
     vector<Source*> light_sources;
     light_sources.push_back(dynamic_cast<Source*>(&scene_light));
 
-    // scene objects
+    // CUSTOMIZABLE scene objects (must be added to scene_objects to show up)
     // Sphere scene_sphere (O, 1, pretty_green);
     Sphere scene_sphere2 (new_sphere_loc, 0.5, pretty_green);
     Plane scene_plane (Y, -1, bw_tiles);
@@ -498,22 +499,22 @@ int main(int argc, char *argv[]){
                         }
                     } else {
                         // anti-aliasing
-                        // int aa_offset = ;
+                        int aa_offset = (double)aax/((double)aadepth - 1);
                         if (width > height) {
                             // the image is wider than it is tall
-                            xamnt = ((x + (double)aax/((double)aadepth - 1)) / width) * aspectratio
+                            xamnt = ((x + aa_offset) / width) * aspectratio
                                     - (((width-height) / (double)height) / 2);
-                            yamnt = ((height - y) + (double)aax/((double)aadepth - 1)) / height;
+                            yamnt = ((height - y) + aa_offset) / height;
                         } else if (height > width) {
                             // the image is taller than it is wide
-                            xamnt = (x + (double)aax/((double)aadepth - 1)) / width;
-                            yamnt = (((height - y) + (double)aax/((double)aadepth - 1)) / height) / aspectratio
+                            xamnt = (x + aa_offset) / width;
+                            yamnt = (((height - y) + aa_offset) / height) / aspectratio
                                     - (((height - width) / (double)width) / 2);
                                     // - (((height - width)/(double)width)/2); wakannai
                         } else {
                             // the image is square
-                            xamnt = (x + (double)aax/((double)aadepth - 1)) / width;
-                            yamnt = ((height - y) + (double)aax/((double)aadepth - 1)) / height;
+                            xamnt = (x + aa_offset) / width;
+                            yamnt = ((height - y) + aa_offset) / height;
                         }
                     }
 
@@ -577,7 +578,7 @@ int main(int argc, char *argv[]){
             for (int iGreen = 0; iGreen < aadepth*aadepth; iGreen++) {
                 totalGreen = totalGreen + tempGreen[iGreen];
                 // totalGreen = 2*totalGreen + tempGreen[iGreen];
-                // the above gives some drugs at least at aadepth = 2
+                // the above gives "drug_effect" if at least at aadepth = 2
             }
             for (int iBlue = 0; iBlue < aadepth*aadepth; iBlue++) {
                 totalBlue = totalBlue + tempBlue[iBlue];
@@ -593,12 +594,9 @@ int main(int argc, char *argv[]){
         }
     }
 
-    saveBMP("scene_anti-aliased.bmp", width, height, dpi, pixels);
+    saveBMP("scene.bmp", width, height, dpi, pixels);
 
     delete pixels;
-    // delete tempRed;
-    // delete tempGreen;
-    // delete tempBlue;
 
     t2 = clock();
     float diff = ((float)t2 - (float)t1) / CLOCKS_PER_SEC;
