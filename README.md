@@ -1,4 +1,4 @@
-# sailik-raytracer
+# raytracer
 This is a raytracer I made by learning from various sources online.
 
 I was actually very pressed for time when making this project, so the code is not as clean as I would like it to be. Many optimizations can be made, including:
